@@ -9,7 +9,7 @@
 using namespace baratol;
 using namespace std;
 
-#define NETWORK_NAME "本地连接"
+#define NETWORK_NAME "本地连接2"
 
 #pragma comment(lib,"netapi32.lib")
 // mac,hostname,ip,netmask,gateway,dns1,dns2
@@ -111,9 +111,11 @@ int main(int argc, char **argv)
 {
 	if(argc <= 1)
 	{
-		cout<<"请使用以下方式中的一种传递参数:";
-		cout<<"auto_set_ip D:/auto_set_ip.txt"<<endl;
-		cout<<"auto_set_ip D:/auto_set_ip.txt 本地连接"<<endl;
+		cout<<"请使用以下方式中的一种传递参数:"<<endl;
+		cout<<"auto_set_ip filename [network]"<<endl;
+		cout<<"例如:"<<endl;
+		cout<<"auto_set_ip ./auto_set_ip.txt"<<endl;
+		cout<<"auto_set_ip ./auto_set_ip.txt 本地连接"<<endl;
 		return -1;
 	}
 	const char* networkName = NETWORK_NAME;
@@ -126,7 +128,10 @@ int main(int argc, char **argv)
 	DATAMAP data;
 
 	//取到了了数据
-	ReadFilesToArray(fileName, data);
+	if (ReadFilesToArray(fileName, data) != 0)
+	{
+		return -1;
+	}
 
 	//获取MAC
 	char *mac=new char[32];
