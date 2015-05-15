@@ -1,3 +1,4 @@
 # auto_set_ip
-a tool for system config
-it can auto set IP,DNS,NETMASK,GATEWAY for Windows
+this is a tool for system network config
+
+it just set IP,DNS,NETMASK,GATEWAY for Windows System,use `netsh` command
