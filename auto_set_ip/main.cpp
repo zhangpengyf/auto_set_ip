@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include "getmac.h"
+#include "cmd.h"
 using namespace baratol;
 using namespace std;
 
@@ -118,10 +119,11 @@ int main(int argc, char **argv)
 		cout<<"auto_set_ip ./auto_set_ip.txt 本地连接"<<endl;
 		return -1;
 	}
-	const char* networkName = NETWORK_NAME;
+
+	CString strNetwork = NETWORK_NAME;
 	if (argc >= 3)
 	{
-		networkName = argv[2];
+		strNetwork = argv[2];
 	}
 
 	const char* fileName = argv[1];
@@ -134,7 +136,7 @@ int main(int argc, char **argv)
 	}
 
 	//获取MAC
-	char *mac=new char[32];
+	char *mac = new char[32];
 	GetMac(mac);
 	printf("mac is:%s\n", mac);
 	CString strMac = mac;
@@ -152,37 +154,33 @@ int main(int argc, char **argv)
 
 	LINE* pRecord = iter->second;
 
-	CString strSetIP;
-	CString strSetDns1;
-	CString strSetDns2;
-
-	strSetIP.Format("netsh interface ip set address \"%s\" static %s %s %s", networkName, pRecord->ip.GetBuffer(0), pRecord->netmast.GetBuffer(0), pRecord->gateway.GetBuffer(0));
-	strSetDns1.Format("netsh interface ip set dns \"%s\" static %s primary", networkName, pRecord->dns1.GetBuffer(0));
-	strSetDns2.Format("netsh interface ip add dns \"%s\" %s", networkName, pRecord->dns2.GetBuffer(0));
-
-	printf("%s\n", strSetIP.GetBuffer(0));
-	int ret = system( strSetIP.GetBuffer(0));
+	int ret = SetIp(strNetwork, pRecord->ip, pRecord->netmast, pRecord->gateway);
 	if (ret != 0)
 	{
-		printf("error\n");
+		printf("set ip error:%d\n", ret);
 		return ret;
 	}
 
-	printf("%s\n", strSetDns1.GetBuffer(0));
-	ret = system( strSetDns1.GetBuffer(0));
+	ret = SetPrimaryDns(strNetwork, pRecord->dns1);
 	if (ret != 0)
 	{
-		printf("error\n");
+		printf("set dns1 error:%d\n", ret);
 		return ret;
 	}
 
-	printf("%s\n", strSetDns2.GetBuffer(0));
-	ret = system( strSetDns2.GetBuffer(0));
+	ret = AddDns(strNetwork, pRecord->dns2);
 	if (ret != 0)
 	{
-		printf("error\n");
+		printf("set dns2 error:%d\n", ret);
 		return ret;
 	}
 
+	ret = SetHostname(pRecord->hostname);
+	if (ret != 0)
+	{
+		printf("set hostname error:%d\n", ret);
+		return ret;
+	}
+	
 	return 0;
 }
