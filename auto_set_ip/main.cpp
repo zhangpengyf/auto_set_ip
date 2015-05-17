@@ -35,7 +35,7 @@ int ReadFilesToArray(const char* fileName, DATAMAP& data)
 	CTLFileObj file;
 	if (file.Open((LPCTSTR)fileName,PF_MEM_FILE | PF_OPEN_ONLY) != TL_FILE_OK)
 	{
-		printf("打开文件失败, %s", (LPCTSTR)fileName);
+		TL_LogEventV("打开文件失败, %s", (LPCTSTR)fileName);
 		return -1;
 	}
 	int nFileLen = file.GetLength();
@@ -46,7 +46,7 @@ int ReadFilesToArray(const char* fileName, DATAMAP& data)
 	{
 		file.Close();
 		TL_Deallocate(buff);
-		printf("读取CSV文件失败, %s", (LPCTSTR)fileName);
+		TL_LogEventV("读取文件失败, %s", (LPCTSTR)fileName);
 		return -1;
 	}
 	file.Close();
@@ -110,6 +110,10 @@ int ReadFilesToArray(const char* fileName, DATAMAP& data)
 
 int main(int argc, char **argv)
 {
+
+	CString strLogFile = TL_GetModulePath() + _T("log.txt");
+	TL_SetDefaultLogEventMode(LOG_BY_DAY | LOG_BY_NOLIMIT | LOG_ADD_TIME | LOG_BY_SAMENAME | LOG_BY_ONEFILE, strLogFile);
+
 	if(argc <= 1)
 	{
 		cout<<"请使用以下方式中的一种传递参数:"<<endl;
@@ -117,6 +121,7 @@ int main(int argc, char **argv)
 		cout<<"例如:"<<endl;
 		cout<<"auto_set_ip ./auto_set_ip.txt"<<endl;
 		cout<<"auto_set_ip ./auto_set_ip.txt 本地连接"<<endl;
+		TL_LogEventV("param error!");
 		return -1;
 	}
 
@@ -138,7 +143,7 @@ int main(int argc, char **argv)
 	//获取MAC
 	char *mac = new char[32];
 	GetMac(mac);
-	printf("mac is:%s\n", mac);
+	TL_LogEventV("mac is:%s\n", mac);
 	CString strMac = mac;
 	delete[]mac;
 
@@ -148,7 +153,7 @@ int main(int argc, char **argv)
 	DATAMAP::iterator iter = data.find(strMac);
 	if (iter == data.end())
 	{
-		printf("can not found ip info in file:%s\n", argv[1]);
+		TL_LogEventV("can not found ip info in file:%s\n", argv[1]);
 		return -1;
 	}
 
@@ -157,28 +162,28 @@ int main(int argc, char **argv)
 	int ret = SetIp(strNetwork, pRecord->ip, pRecord->netmast, pRecord->gateway);
 	if (ret != 0)
 	{
-		printf("set ip error:%d\n", ret);
+		TL_LogEventV("set ip error:%d\n", ret);
 		return ret;
 	}
 
 	ret = SetPrimaryDns(strNetwork, pRecord->dns1);
 	if (ret != 0)
 	{
-		printf("set dns1 error:%d\n", ret);
+		TL_LogEventV("set dns1 error:%d\n", ret);
 		return ret;
 	}
 
 	ret = AddDns(strNetwork, pRecord->dns2);
 	if (ret != 0)
 	{
-		printf("set dns2 error:%d\n", ret);
+		TL_LogEventV("set dns2 error:%d\n", ret);
 		return ret;
 	}
 
 	ret = SetHostname(pRecord->hostname);
 	if (ret != 0)
 	{
-		printf("set hostname error:%d\n", ret);
+		TL_LogEventV("set hostname error:%d\n", ret);
 		return ret;
 	}
 	
