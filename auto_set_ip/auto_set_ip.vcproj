@@ -185,6 +185,10 @@
 				RelativePath=".\main.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\runSystemCmd.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -197,6 +201,10 @@
 			</File>
 			<File
 				RelativePath=".\getmac.h"
+				>
+			</File>
+			<File
+				RelativePath=".\runSystemCmd.h"
 				>
 			</File>
 		</Filter>

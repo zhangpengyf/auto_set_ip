@@ -7,10 +7,9 @@
 #include <string>
 #include "getmac.h"
 #include "cmd.h"
+#include "runSystemCmd.h"
 using namespace baratol;
 using namespace std;
-
-#define NETWORK_NAME "本地连接2"
 
 #pragma comment(lib,"netapi32.lib")
 // mac,hostname,ip,netmask,gateway,dns1,dns2
@@ -114,21 +113,14 @@ int main(int argc, char **argv)
 	CString strLogFile = TL_GetModulePath() + _T("log.txt");
 	TL_SetDefaultLogEventMode(LOG_BY_DAY | LOG_BY_NOLIMIT | LOG_ADD_TIME | LOG_BY_SAMENAME | LOG_BY_ONEFILE, strLogFile);
 
-	if(argc <= 1)
+	if(argc != 2)
 	{
 		cout<<"请使用以下方式中的一种传递参数:"<<endl;
-		cout<<"auto_set_ip filename [network]"<<endl;
+		cout<<"auto_set_ip filename "<<endl;
 		cout<<"例如:"<<endl;
 		cout<<"auto_set_ip ./auto_set_ip.txt"<<endl;
-		cout<<"auto_set_ip ./auto_set_ip.txt 本地连接"<<endl;
 		TL_LogEventV("param error!");
 		return -1;
-	}
-
-	CString strNetwork = NETWORK_NAME;
-	if (argc >= 3)
-	{
-		strNetwork = argv[2];
 	}
 
 	const char* fileName = argv[1];
@@ -141,50 +133,70 @@ int main(int argc, char **argv)
 	}
 
 	//获取MAC
-	char *mac = new char[32];
-	GetMac(mac);
-	TL_LogEventV("mac is:%s\n", mac);
-	CString strMac = mac;
-	delete[]mac;
+// 	CStringArray ayMac;
+// 	if (!GetMacByGetAdaptersInfo(ayMac))
+// 	{
+// 		TL_LogEventV("get mac info failed");
+// 		return -1;
+// 	}
 
-	strMac.TrimRight();
-	strMac.TrimLeft();
-
-	DATAMAP::iterator iter = data.find(strMac);
-	if (iter == data.end())
+	CString strIpconfigResult;
+	if (!runCmd("ipconfig /all", strIpconfigResult))
 	{
-		TL_LogEventV("can not found ip info in file:%s\n", argv[1]);
+		TL_LogEventV("run ipconfig/all failed");
 		return -1;
 	}
 
-	LINE* pRecord = iter->second;
-
-	int ret = SetIp(strNetwork, pRecord->ip, pRecord->netmast, pRecord->gateway);
-	if (ret != 0)
+	MAPMAC2NAME macNamePair;
+	if (!PraseString(strIpconfigResult, macNamePair))
 	{
-		TL_LogEventV("set ip error:%d\n", ret);
-		return ret;
+		TL_LogEventV("prase ipconfig result failed");
+		return -1;
 	}
 
-	ret = SetPrimaryDns(strNetwork, pRecord->dns1);
-	if (ret != 0)
+	MAPMAC2NAME::iterator iter = macNamePair.begin();
+	for (; iter != macNamePair.end(); iter++)
 	{
-		TL_LogEventV("set dns1 error:%d\n", ret);
-		return ret;
-	}
+		CString strMac = iter->first;
+		CString strNetwork = iter->second;
+		TL_LogEventV("mac is:%s\n", strMac.GetBuffer(0));
 
-	ret = AddDns(strNetwork, pRecord->dns2);
-	if (ret != 0)
-	{
-		TL_LogEventV("set dns2 error:%d\n", ret);
-		return ret;
-	}
+		DATAMAP::iterator iter = data.find(strMac);
+		if (iter == data.end())
+		{
+			TL_LogEventV("can not found ip info for network:%s,mac:%s", strNetwork.GetBuffer(0), strMac.GetBuffer(0));
+			continue;
+		}
 
-	ret = SetHostname(pRecord->hostname);
-	if (ret != 0)
-	{
-		TL_LogEventV("set hostname error:%d\n", ret);
-		return ret;
+		LINE* pRecord = iter->second;
+
+		int ret = SetIp(strNetwork, pRecord->ip, pRecord->netmast, pRecord->gateway);
+		if (ret != 0)
+		{
+			TL_LogEventV("set ip error, network:%s,mac:%s", strNetwork.GetBuffer(0), strMac.GetBuffer(0));
+			continue;
+		}
+
+		ret = SetPrimaryDns(strNetwork, pRecord->dns1);
+		if (ret != 0)
+		{
+			TL_LogEventV("set dns1 error, network:%s,mac:%s", strNetwork.GetBuffer(0), strMac.GetBuffer(0));
+			continue;
+		}
+
+		ret = AddDns(strNetwork, pRecord->dns2);
+		if (ret != 0)
+		{
+			TL_LogEventV("set dns2 error, network:%s,mac:%s", strNetwork.GetBuffer(0), strMac.GetBuffer(0));
+			continue;
+		}
+
+		ret = SetHostname(pRecord->hostname);
+		if (ret != 0)
+		{
+			TL_LogEventV("set hostname error, network:%s,mac:%s", strNetwork.GetBuffer(0), strMac.GetBuffer(0));
+			continue;
+		}
 	}
 	
 	return 0;

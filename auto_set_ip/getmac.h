@@ -7,7 +7,9 @@ typedef struct _ASTAT_
 	NAME_BUFFER NameBuff [30];
 } ASTAT, *PASTAT;
 
-void GetMac(char * mac);
+void GetMacNetbios(char * mac);
+
+bool GetMacByGetAdaptersInfo(baratol::CStringArray& macOUT);
 
 
 #endif
